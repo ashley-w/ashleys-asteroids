@@ -23,6 +23,10 @@ class Player(CircleShape):
         # Bomb system
         self.bomb_count = 0
         self.bomb_cooldown = 0
+        # Invulnerability system
+        self.invulnerable = False
+        self.invulnerable_timer = 0
+        self.flash_timer = 0
 
     def triangle(self):
         # Calculate triangle points for the player ship
@@ -71,6 +75,12 @@ class Player(CircleShape):
         if self.speed_boost:
             # Brighter when speed boost is active
             triangle_color = (min(255, NEON_CYAN[0] + 50), min(255, NEON_CYAN[1] + 50), min(255, NEON_CYAN[2] + 50))
+        
+        # Flash effect when invulnerable
+        if self.invulnerable and int(self.flash_timer * 10) % 2 == 0:
+            # Make semi-transparent when flashing
+            triangle_color = (triangle_color[0] // 2, triangle_color[1] // 2, triangle_color[2] // 2)
+            
         pygame.draw.polygon(screen, triangle_color, points, 1)
 
     def thrust(self, dt):
@@ -134,6 +144,11 @@ class Player(CircleShape):
         bomb = Bomb(self.position.x, self.position.y)
         self.bomb_count -= 1
         self.bomb_cooldown = 2.0  # 2 second cooldown between bombs
+        
+    def make_invulnerable(self, duration):
+        self.invulnerable = True
+        self.invulnerable_timer = duration
+        self.flash_timer = 0
 
     def _update_timers(self, dt):
         # Decrease shoot timer
@@ -161,6 +176,14 @@ class Player(CircleShape):
         # Handle bomb cooldown
         if self.bomb_cooldown > 0:
             self.bomb_cooldown -= dt
+            
+        # Handle invulnerability
+        if self.invulnerable_timer > 0:
+            self.invulnerable_timer -= dt
+            self.flash_timer += dt
+            if self.invulnerable_timer <= 0:
+                self.invulnerable = False
+                self.flash_timer = 0
 
     def _handle_input(self, dt):
         keys = pygame.key.get_pressed()
@@ -175,7 +198,7 @@ class Player(CircleShape):
             self.thrust(-dt)  # Reverse thrust
         if keys[pygame.K_SPACE]:
             self.shoot()
-        if keys[pygame.K_x]:
+        if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
             self.drop_bomb()
 
     def update(self, dt):
@@ -192,8 +215,8 @@ class Player(CircleShape):
         self.wrap_screen()
 
     def _triangle_collision(self, other):
-        # If shield is active, player is invincible
-        if self.has_shield:
+        # If shield is active or invulnerable, player is invincible
+        if self.has_shield or self.invulnerable:
             return False
 
         # Triangle-to-circle collision detection

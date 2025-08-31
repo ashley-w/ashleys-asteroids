@@ -27,7 +27,7 @@ def main():
 
     clock = pygame.time.Clock()
     dt = 0
-    game_state = "playing"  # "playing" or "game_over"
+    game_state = "start"  # "start", "playing", "paused", or "game_over"
     score = 0
     lives = 3
     respawn_timer = 0
@@ -152,6 +152,73 @@ def main():
         screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 10))
         screen.blit(quit_text, (SCREEN_WIDTH//2 - quit_text.get_width()//2, SCREEN_HEIGHT//2 + 70))
 
+    def draw_pause_menu(screen):
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(120)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        
+        # Draw pause menu
+        font_large = pygame.font.SysFont('courier', 64, bold=True)
+        font_medium = pygame.font.SysFont('courier', 48, bold=True)
+        
+        pause_text = font_large.render("PAUSED", True, NEON_CYAN)
+        resume_text = font_medium.render("Press ESC to Resume", True, NEON_GREEN)
+        restart_text = font_medium.render("Press R to Restart", True, NEON_PURPLE)
+        quit_text = font_medium.render("Press Q to Quit", True, NEON_PINK)
+        
+        # Center the text
+        screen.blit(pause_text, (SCREEN_WIDTH//2 - pause_text.get_width()//2, SCREEN_HEIGHT//2 - 120))
+        screen.blit(resume_text, (SCREEN_WIDTH//2 - resume_text.get_width()//2, SCREEN_HEIGHT//2 - 30))
+        screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 20))
+        screen.blit(quit_text, (SCREEN_WIDTH//2 - quit_text.get_width()//2, SCREEN_HEIGHT//2 + 70))
+
+    def draw_start_screen(screen):
+        # Draw title
+        font_title = pygame.font.SysFont('courier', 72, bold=True)
+        font_subtitle = pygame.font.SysFont('courier', 32, bold=True)
+        font_controls = pygame.font.SysFont('courier', 24, bold=True)
+        font_start = pygame.font.SysFont('courier', 48, bold=True)
+        
+        title_text = font_title.render("ASHLEY'S ASTEROIDS", True, NEON_CYAN)
+        subtitle_text = font_subtitle.render("A Triangle Simulator", True, NEON_PURPLE)
+        
+        # Controls section
+        controls_title = font_subtitle.render("CONTROLS:", True, NEON_PINK)
+        controls = [
+            "A/D - Turn Left/Right",
+            "W/S - Thrust Forward/Backward", 
+            "SPACE - Shoot",
+            "SHIFT - Drop Bomb",
+            "ESC - Pause Game"
+        ]
+        
+        start_text = font_start.render("Press SPACEBAR to Start", True, NEON_GREEN)
+        
+        # Position everything
+        y_pos = 150
+        screen.blit(title_text, (SCREEN_WIDTH//2 - title_text.get_width()//2, y_pos))
+        y_pos += 80
+        screen.blit(subtitle_text, (SCREEN_WIDTH//2 - subtitle_text.get_width()//2, y_pos))
+        
+        y_pos += 120
+        screen.blit(controls_title, (SCREEN_WIDTH//2 - controls_title.get_width()//2, y_pos))
+        y_pos += 50
+        
+        for control in controls:
+            control_text = font_controls.render(control, True, ELECTRIC_BLUE)
+            screen.blit(control_text, (SCREEN_WIDTH//2 - control_text.get_width()//2, y_pos))
+            y_pos += 35
+            
+        # Pulsing start text
+        pulse = 1 + 0.3 * pygame.math.Vector2(1, 0).rotate(pygame.time.get_ticks() * 0.2).x
+        alpha = int(255 * pulse)
+        start_surface = pygame.Surface(start_text.get_size())
+        start_surface.set_alpha(alpha)
+        start_surface.blit(start_text, (0, 0))
+        screen.blit(start_surface, (SCREEN_WIDTH//2 - start_text.get_width()//2, y_pos + 40))
+
     # game loop
     while True:
         # handle events
@@ -159,7 +226,22 @@ def main():
             if event.type == pygame.QUIT:
                 return
             elif event.type == pygame.KEYDOWN:
-                if game_state == "game_over":
+                if game_state == "start":
+                    if event.key == pygame.K_SPACE:
+                        game_state = "playing"
+                        reset_game()
+                elif game_state == "playing":
+                    if event.key == pygame.K_ESCAPE:
+                        game_state = "paused"
+                elif game_state == "paused":
+                    if event.key == pygame.K_ESCAPE:
+                        game_state = "playing"
+                    elif event.key == pygame.K_r:
+                        game_state = "playing"
+                        reset_game()
+                    elif event.key == pygame.K_q:
+                        return
+                elif game_state == "game_over":
                     if event.key == pygame.K_r:
                         game_state = "playing"
                         reset_game()
@@ -169,24 +251,84 @@ def main():
         screen.fill(DARK_SPACE)
         starfield.draw(screen)
         
-        if game_state == "playing":
+        if game_state == "start":
+            draw_start_screen(screen)
+        elif game_state == "playing":
             starfield.update(dt)
             notification_manager.update(dt)
             for sprite in drawable:
                 sprite.draw(screen)
             updatable.update(dt)
             
-            # Draw score, lives, and bomb count
+            # Draw score, lives, and bomb count with backgrounds for readability
             font = pygame.font.SysFont('courier', 48, bold=True)
-            score_text = font.render(f"Score: {score}", True, NEON_CYAN)
-            lives_text = font.render(f"Lives: {lives}", True, NEON_PINK)
-            bombs_text = font.render(f"Bombs: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)
-            screen.blit(score_text, (20, 20))
-            screen.blit(lives_text, (20, 80))
-            screen.blit(bombs_text, (20, 140))
+            
+            # Helper function to draw text with background
+            def draw_text_with_bg(text, color, x, y):
+                rendered_text = font.render(text, True, color)
+                text_rect = rendered_text.get_rect()
+                text_rect.x = x
+                text_rect.y = y
+                
+                # Create background rectangle with padding
+                bg_rect = pygame.Rect(text_rect.x - 10, text_rect.y - 5, 
+                                    text_rect.width + 20, text_rect.height + 10)
+                
+                # Semi-transparent dark background
+                bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+                bg_surface.set_alpha(180)
+                bg_surface.fill((0, 0, 0))
+                screen.blit(bg_surface, bg_rect.topleft)
+                
+                # Colored border
+                pygame.draw.rect(screen, color, bg_rect, 2)
+                
+                # Text on top
+                screen.blit(rendered_text, text_rect)
+            
+            draw_text_with_bg(f"Score: {score}", NEON_CYAN, 20, 20)
+            draw_text_with_bg(f"Lives: {lives}", NEON_PINK, 20, 80)
+            draw_text_with_bg(f"Bombs: {player.bomb_count if respawn_timer <= 0 else 0}", NEON_PURPLE, 20, 140)
             
             # Draw notifications on top
             notification_manager.draw(screen)
+        elif game_state == "paused":
+            # Draw game objects frozen
+            for sprite in drawable:
+                sprite.draw(screen)
+            
+            # Draw UI
+            font = pygame.font.SysFont('courier', 48, bold=True)
+            
+            # Helper function to draw text with background
+            def draw_text_with_bg(text, color, x, y):
+                rendered_text = font.render(text, True, color)
+                text_rect = rendered_text.get_rect()
+                text_rect.x = x
+                text_rect.y = y
+                
+                # Create background rectangle with padding
+                bg_rect = pygame.Rect(text_rect.x - 10, text_rect.y - 5, 
+                                    text_rect.width + 20, text_rect.height + 10)
+                
+                # Semi-transparent dark background
+                bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
+                bg_surface.set_alpha(180)
+                bg_surface.fill((0, 0, 0))
+                screen.blit(bg_surface, bg_rect.topleft)
+                
+                # Colored border
+                pygame.draw.rect(screen, color, bg_rect, 2)
+                
+                # Text on top
+                screen.blit(rendered_text, text_rect)
+            
+            draw_text_with_bg(f"Score: {score}", NEON_CYAN, 20, 20)
+            draw_text_with_bg(f"Lives: {lives}", NEON_PINK, 20, 80)
+            draw_text_with_bg(f"Bombs: {player.bomb_count if respawn_timer <= 0 else 0}", NEON_PURPLE, 20, 140)
+            
+            # Draw pause menu
+            draw_pause_menu(screen)
         elif game_state == "game_over":
             # Still draw the game objects but frozen
             for sprite in drawable:
@@ -204,8 +346,9 @@ def main():
             if respawn_timer > 0:
                 respawn_timer -= dt
                 if respawn_timer <= 0:
-                    # Respawn player at center
+                    # Respawn player at center with temporary invulnerability
                     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+                    player.make_invulnerable(3.0)  # 3 seconds of invulnerability
             
             # Only check collisions if player exists and isn't respawning
             elif respawn_timer <= 0:
