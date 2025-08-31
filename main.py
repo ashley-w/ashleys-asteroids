@@ -34,6 +34,7 @@ def main():
         screen.fill((0, 0, 0))
         player.draw(screen)
         pygame.display.flip()
+        player.update(dt)
 
         # update game state
         clock.tick(60)
