@@ -15,6 +15,9 @@ def main():
     # create the screen
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+    clock = pygame.time.Clock()
+    dt = 0
+
     # game loop
     while True:
         # handle events
@@ -24,6 +27,12 @@ def main():
         # drawing
         screen.fill((0, 0, 0))
         pygame.display.flip()
+
+        # update game state
+        clock.tick(60)
+        dt = clock.tick(60) / 1000
+
+
 
 
 # runs the main function
