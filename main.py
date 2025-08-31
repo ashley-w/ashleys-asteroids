@@ -1,5 +1,6 @@
 import pygame
 import sys
+import asyncio
 from src.core.constants import *
 from src.entities.player import Player
 from src.entities.asteroid import Asteroid
@@ -13,7 +14,7 @@ from src.systems.notification import NotificationManager
 
 
 # main game loop
-def main():
+async def main():
     # initializing pygame
     pygame.init()
 
@@ -338,8 +339,8 @@ def main():
         pygame.display.flip()
 
         # update game state
-        clock.tick(60)
         dt = clock.tick(60) / 1000
+        await asyncio.sleep(0)
 
         if game_state == "playing":
             # Handle respawn timer
@@ -418,4 +419,4 @@ def main():
 
 # runs the main function
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
