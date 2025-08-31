@@ -1,7 +1,7 @@
 import pygame
 import random
 import math
-from constants import NEON_PINK, NEON_PURPLE, NEON_GREEN, ELECTRIC_BLUE
+from src.core.constants import NEON_PINK, NEON_PURPLE, NEON_GREEN, ELECTRIC_BLUE
 
 class ExplosionParticle:
     def __init__(self, x, y, color):

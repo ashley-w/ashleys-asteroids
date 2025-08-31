@@ -1,7 +1,7 @@
 import pygame
 import random
-from circleshape import CircleShape
-from constants import ASTEROID_MIN_RADIUS, NEON_PURPLE, NEON_PINK
+from src.core.circleshape import CircleShape
+from src.core.constants import ASTEROID_MIN_RADIUS, NEON_PURPLE, NEON_PINK
 
 class Asteroid(CircleShape):
     def __init__(self, x, y, radius):
@@ -42,6 +42,7 @@ class Asteroid(CircleShape):
 
     def update(self, dt):
         self.position += (self.velocity * dt)  # type: ignore
+        self.wrap_screen()
 
     def split(self):
         # Kill this asteroid

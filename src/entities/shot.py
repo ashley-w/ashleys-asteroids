@@ -1,10 +1,11 @@
 import pygame
-from circleshape import CircleShape
-from constants import SHOT_RADIUS, NEON_GREEN
+from src.core.circleshape import CircleShape
+from src.core.constants import SHOT_RADIUS, NEON_GREEN
 
 class Shot(CircleShape):
-    def __init__(self, x, y):
-        super().__init__(x, y, SHOT_RADIUS)
+    def __init__(self, x, y, size_multiplier=1.0):
+        radius = int(SHOT_RADIUS * size_multiplier)
+        super().__init__(x, y, radius)
 
     def draw(self, screen):
         # Draw 3D energy bullet with depth layers
@@ -35,3 +36,4 @@ class Shot(CircleShape):
 
     def update(self, dt):
         self.position += (self.velocity * dt)  # type: ignore
+        self.wrap_screen()

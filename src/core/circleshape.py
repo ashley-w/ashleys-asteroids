@@ -26,3 +26,17 @@ class CircleShape(pygame.sprite.Sprite):
     def update(self, dt):
         # sub-classes must override
         pass
+    
+    def wrap_screen(self):
+        # Wrap around screen edges
+        from src.core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
+        
+        if self.position.x < -self.radius:
+            self.position.x = SCREEN_WIDTH + self.radius
+        elif self.position.x > SCREEN_WIDTH + self.radius:
+            self.position.x = -self.radius
+            
+        if self.position.y < -self.radius:
+            self.position.y = SCREEN_HEIGHT + self.radius
+        elif self.position.y > SCREEN_HEIGHT + self.radius:
+            self.position.y = -self.radius

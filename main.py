@@ -1,11 +1,13 @@
 import pygame
 import sys
-from constants import *
-from player import Player
-from asteroid import Asteroid
-from asteroidfield import AsteroidField
-from shot import Shot
-from explosion import Explosion
+from src.core.constants import *
+from src.entities.player import Player
+from src.entities.asteroid import Asteroid
+from src.systems.asteroidfield import AsteroidField
+from src.entities.shot import Shot
+from src.systems.explosion import Explosion
+from src.systems.starfield import Starfield
+from src.entities.powerup import Powerup
 
 
 # main game loop
@@ -25,6 +27,8 @@ def main():
     dt = 0
     game_state = "playing"  # "playing" or "game_over"
     score = 0
+    lives = 3
+    respawn_timer = 0
 
     # groups
     updatable = pygame.sprite.Group()
@@ -32,34 +36,40 @@ def main():
     asteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
     explosions = pygame.sprite.Group()
+    powerups = pygame.sprite.Group()
 
     Player.containers = (updatable, drawable)  # type: ignore
     Asteroid.containers = (asteroids, updatable, drawable)  # type: ignore
     AsteroidField.containers = (updatable,)  # type: ignore
     Shot.containers = (shots, updatable, drawable)  # type: ignore
     Explosion.containers = (explosions, updatable, drawable)  # type: ignore
+    Powerup.containers = (powerups, updatable, drawable)  # type: ignore
 
     # Create player at center of screen
     x = SCREEN_WIDTH / 2
     y = SCREEN_HEIGHT / 2
     player = Player(x, y)
 
-    # Create asteroid field
+    # Create asteroid field and starfield
     asteroid_field = AsteroidField()
+    starfield = Starfield()
 
     def reset_game():
-        nonlocal player, asteroid_field, score
+        nonlocal player, asteroid_field, score, lives, respawn_timer
         # Clear all sprite groups
         updatable.empty()
         drawable.empty() 
         asteroids.empty()
         shots.empty()
         explosions.empty()
+        powerups.empty()
         
         # Recreate player and asteroid field
         player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         asteroid_field = AsteroidField()
         score = 0
+        lives = 3
+        respawn_timer = 0
     
     def draw_star(screen, x, y, size, color):
         # Draw a 5-pointed star using lines
@@ -148,18 +158,22 @@ def main():
                         reset_game()
                     elif event.key == pygame.K_q:
                         return
-        # drawing - dark space background
+        # drawing - dark space background with starfield
         screen.fill(DARK_SPACE)
+        starfield.draw(screen)
         
         if game_state == "playing":
+            starfield.update(dt)
             for sprite in drawable:
                 sprite.draw(screen)
             updatable.update(dt)
             
-            # Draw score
+            # Draw score and lives
             font = pygame.font.SysFont('courier', 48, bold=True)
             score_text = font.render(f"Score: {score}", True, NEON_CYAN)
+            lives_text = font.render(f"Lives: {lives}", True, NEON_PINK)
             screen.blit(score_text, (20, 20))
+            screen.blit(lives_text, (20, 80))
         elif game_state == "game_over":
             # Still draw the game objects but frozen
             for sprite in drawable:
@@ -173,9 +187,32 @@ def main():
         dt = clock.tick(60) / 1000
 
         if game_state == "playing":
-            for asteroid in asteroids:
-                if player.collision(asteroid):
-                    game_state = "game_over"
+            # Handle respawn timer
+            if respawn_timer > 0:
+                respawn_timer -= dt
+                if respawn_timer <= 0:
+                    # Respawn player at center
+                    player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+            
+            # Only check collisions if player exists and isn't respawning
+            elif respawn_timer <= 0:
+                for asteroid in asteroids:
+                    if player.collision(asteroid):
+                        lives -= 1
+                        if lives <= 0:
+                            game_state = "game_over"
+                        else:
+                            # Set respawn timer and remove player temporarily
+                            respawn_timer = 2.0  # 2 seconds invincibility
+                            player.kill()
+                            # Create explosion at player position
+                            explosion = Explosion(player.position.x, player.position.y, player.radius)
+            
+            # Check for powerup collection
+            for powerup in powerups:
+                if player.collision(powerup):
+                    player.apply_powerup(powerup.powerup_type)
+                    powerup.kill()
 
         # Check for shot-asteroid collisions
         for asteroid in asteroids:
@@ -191,6 +228,11 @@ def main():
                     
                     # Create explosion at asteroid position
                     explosion = Explosion(asteroid.position.x, asteroid.position.y, asteroid.radius)
+                    
+                    # 10% chance to spawn powerup when destroying asteroid
+                    import random
+                    if random.random() < 0.1:
+                        powerup = Powerup(asteroid.position.x, asteroid.position.y)
                     
                     shot.kill()
                     asteroid.split()
