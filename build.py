@@ -25,6 +25,7 @@ def build_web():
             "--width", "1280",
             "--height", "720", 
             "--name", "Ashley's Asteroids",
+            "--optimize",
             "--archive"
         ]
         subprocess.run(cmd, check=True)
