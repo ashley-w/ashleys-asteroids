@@ -6,7 +6,7 @@ SCREEN_HEIGHT = 720
 # asteroid properties
 ASTEROID_MIN_RADIUS = 20
 ASTEROID_KINDS = 3
-ASTEROID_SPAWN_RATE = 1.5  # seconds - start slower for better progression
+ASTEROID_SPAWN_RATE = 2.0  # seconds - slower start, better balance
 ASTEROID_MAX_RADIUS = ASTEROID_MIN_RADIUS * ASTEROID_KINDS
 
 # player ship

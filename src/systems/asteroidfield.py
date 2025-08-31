@@ -42,8 +42,8 @@ class AsteroidField(pygame.sprite.Sprite):
         self.time_elapsed += dt
         
         # Calculate dynamic spawn rate based on time (gets faster over time)
-        # Start at base rate, decrease by 10% every 30 seconds, minimum 0.2 seconds
-        difficulty_multiplier = max(0.25, 1 - (self.time_elapsed / 300))  # 5 minutes to reach max difficulty
+        # More gradual difficulty increase
+        difficulty_multiplier = max(0.6, 1 - (self.time_elapsed / 600))  # 10 minutes to reach max difficulty
         current_spawn_rate = ASTEROID_SPAWN_RATE * difficulty_multiplier
         
         if self.spawn_timer > current_spawn_rate:
