@@ -1,6 +1,7 @@
 # Build outputs
 dist/
 build/
+main/
 *.egg-info/
 
 # Python cache

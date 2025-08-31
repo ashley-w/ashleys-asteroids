@@ -32,33 +32,25 @@ cd ashleys-asteroids
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the game
+# Run the game locally
 python main.py
 ```
 
-### Web Build
+### Web Build & Deploy
 ```bash
-# Build for web deployment
-python build.py
+# Build for web
+python build-local.py
 
-# Or manually:
-python -m pygbag main.py --width 1280 --height 720 --name "Ashley's Asteroids"
+# This creates a 'main' folder with web files
+# Upload the contents of the 'main' folder to Netlify manually
 ```
 
-## 🌐 Deployment to Netlify
+## 🌐 Manual Deployment to Netlify
 
-1. **Connect to Netlify:**
-   - Push your code to GitHub
-   - Connect your GitHub repo to Netlify
-   - Netlify will automatically detect the `netlify.toml` configuration
-
-2. **Build Settings:**
-   - Build command: `python -m pygbag main.py --width 1280 --height 720 --name "Ashley's Asteroids"`
-   - Publish directory: `dist`
-   - Python version: 3.11 (set in `runtime.txt`)
-
-3. **Deploy:**
-   - Netlify will automatically build and deploy on every push to main branch
+1. **Build locally:** Run `python build-local.py`
+2. **Find the output:** Look for a `main` folder with your web files
+3. **Deploy:** Drag & drop the `main` folder contents to Netlify
+4. **Your game goes live!** 🔺
 
 ## 📁 Project Structure
 ```
@@ -68,17 +60,16 @@ ashleys-asteroids/
 │   ├── entities/       # Game objects (player, asteroids, etc.)
 │   └── systems/        # Game systems (explosions, notifications, etc.)
 ├── main.py            # Main game entry point
-├── netlify.toml       # Netlify configuration
 ├── requirements.txt   # Python dependencies
-├── build.py          # Build script for web deployment
+├── build-local.py     # Simple build script
 └── README.md         # This file
 ```
 
 ## 🎨 Tech Stack
-- **Python 3.11+**
+- **Python 3.10+**
 - **pygame-ce** for game engine
 - **pygbag** for WebAssembly compilation
-- **Netlify** for web hosting
+- **Netlify** for web hosting (manual deploy)
 
 ## 🔧 Game Architecture
 - **Entity-Component System** with pygame sprite groups
