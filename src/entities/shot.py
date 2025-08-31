@@ -36,4 +36,9 @@ class Shot(CircleShape):
 
     def update(self, dt):
         self.position += (self.velocity * dt)  # type: ignore
-        self.wrap_screen()
+        
+        # Kill bullet if it goes off screen instead of wrapping
+        from src.core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
+        if (self.position.x < -50 or self.position.x > SCREEN_WIDTH + 50 or 
+            self.position.y < -50 or self.position.y > SCREEN_HEIGHT + 50):
+            self.kill()

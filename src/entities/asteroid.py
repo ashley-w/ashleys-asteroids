@@ -1,11 +1,22 @@
 import pygame
 import random
+import math
 from src.core.circleshape import CircleShape
 from src.core.constants import ASTEROID_MIN_RADIUS, NEON_PURPLE, NEON_PINK
 
 class Asteroid(CircleShape):
     def __init__(self, x, y, radius):
         super().__init__(x, y, radius)
+        # Generate random lumpy shape
+        self.vertices = []
+        num_points = random.randint(8, 12)  # Random complexity
+        for i in range(num_points):
+            angle = (i / num_points) * 2 * math.pi
+            # Random radius variation for lumpy effect
+            r = radius * random.uniform(0.7, 1.3)
+            x_offset = r * math.cos(angle)
+            y_offset = r * math.sin(angle)
+            self.vertices.append((x_offset, y_offset))
 
     def draw(self, screen):
         # Choose color based on asteroid size
@@ -16,29 +27,44 @@ class Asteroid(CircleShape):
         else:
             color = NEON_PURPLE  # Small asteroids
         
-        # Create 3D depth effect with layered circles
-        # Draw shadow/depth layer (darker, offset)
-        shadow_pos = (self.position.x + 2, self.position.y + 2)
-        shadow_color = (color[0]//3, color[1]//3, color[2]//3)  # Much darker
-        pygame.draw.circle(screen, shadow_color, shadow_pos, self.radius, 0)
+        # Create world coordinates for lumpy shape
+        points = []
+        shadow_points = []
+        for x_offset, y_offset in self.vertices:
+            world_x = self.position.x + x_offset
+            world_y = self.position.y + y_offset
+            points.append((world_x, world_y))
+            shadow_points.append((world_x + 2, world_y + 2))
         
-        # Draw gradient layers for roundness (from dark center to bright edge)
-        for i in range(5):
-            layer_radius = self.radius * (0.2 + 0.16 * i)  # Increasing size
-            intensity = 0.3 + 0.14 * i  # Increasing brightness
+        # Draw shadow
+        shadow_color = (color[0]//3, color[1]//3, color[2]//3)
+        pygame.draw.polygon(screen, shadow_color, shadow_points, 0)
+        
+        # Draw gradient layers for depth
+        for i in range(3):
+            scale = 0.4 + 0.2 * i  # Inner to outer layers
+            intensity = 0.4 + 0.2 * i  # Increasing brightness
             layer_color = (int(color[0] * intensity), int(color[1] * intensity), int(color[2] * intensity))
-            pygame.draw.circle(screen, layer_color, self.position, int(layer_radius), 0)
+            
+            scaled_points = []
+            for x_offset, y_offset in self.vertices:
+                scaled_x = self.position.x + x_offset * scale
+                scaled_y = self.position.y + y_offset * scale
+                scaled_points.append((scaled_x, scaled_y))
+            pygame.draw.polygon(screen, layer_color, scaled_points, 0)
         
-        # Draw bright outer glow
-        glow_color = (*color, 60)
-        pygame.draw.circle(screen, glow_color, self.position, self.radius + 3, 0)
+        # Draw outer glow
+        glow_color = (*color, 40)
+        glow_points = []
+        for x_offset, y_offset in self.vertices:
+            glow_x = self.position.x + x_offset * 1.2
+            glow_y = self.position.y + y_offset * 1.2
+            glow_points.append((glow_x, glow_y))
+        pygame.draw.polygon(screen, glow_color, glow_points, 0)
         
-        # Draw crisp outer edge with thicker border for definition
-        pygame.draw.circle(screen, color, self.position, self.radius, 3)
-        
-        # Add inner highlight ring for more definition
-        highlight_color = (min(255, color[0] + 50), min(255, color[1] + 50), min(255, color[2] + 50))
-        pygame.draw.circle(screen, highlight_color, self.position, self.radius - 3, 1)
+        # Draw main lumpy asteroid
+        pygame.draw.polygon(screen, color, points, 0)
+        pygame.draw.polygon(screen, color, points, 2)
 
     def update(self, dt):
         self.position += (self.velocity * dt)  # type: ignore

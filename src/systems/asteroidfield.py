@@ -31,6 +31,7 @@ class AsteroidField(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.spawn_timer = 0.0
+        self.time_elapsed = 0.0
 
     def spawn(self, radius, position, velocity):
         asteroid = Asteroid(position.x, position.y, radius)
@@ -38,14 +39,33 @@ class AsteroidField(pygame.sprite.Sprite):
 
     def update(self, dt):
         self.spawn_timer += dt
-        if self.spawn_timer > ASTEROID_SPAWN_RATE:
+        self.time_elapsed += dt
+        
+        # Calculate dynamic spawn rate based on time (gets faster over time)
+        # Start at base rate, decrease by 10% every 30 seconds, minimum 0.2 seconds
+        difficulty_multiplier = max(0.25, 1 - (self.time_elapsed / 300))  # 5 minutes to reach max difficulty
+        current_spawn_rate = ASTEROID_SPAWN_RATE * difficulty_multiplier
+        
+        if self.spawn_timer > current_spawn_rate:
             self.spawn_timer = 0
 
             # spawn a new asteroid at a random edge
             edge = random.choice(self.edges)
-            speed = random.randint(40, 100)
+            
+            # Speed increases slightly over time
+            base_speed_min = 40 + int(self.time_elapsed / 20)  # +1 every 20 seconds
+            base_speed_max = 100 + int(self.time_elapsed / 15)  # +1 every 15 seconds
+            speed = random.randint(min(base_speed_min, 80), min(base_speed_max, 150))
+            
             velocity = edge[0] * speed
             velocity = velocity.rotate(random.randint(-30, 30))
             position = edge[1](random.uniform(0, 1))
-            kind = random.randint(1, ASTEROID_KINDS)
+            
+            # Bias towards larger asteroids over time, but still spawn smaller ones
+            if self.time_elapsed > 60:  # After 1 minute, start favoring larger asteroids
+                kind_weights = [3, 2, 1]  # Favor smaller asteroids less
+            else:
+                kind_weights = [1, 1, 1]  # Equal probability
+                
+            kind = random.choices([1, 2, 3], weights=kind_weights)[0]
             self.spawn(ASTEROID_MIN_RADIUS * kind, position, velocity)

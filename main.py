@@ -8,6 +8,8 @@ from src.entities.shot import Shot
 from src.systems.explosion import Explosion
 from src.systems.starfield import Starfield
 from src.entities.powerup import Powerup
+from src.entities.bomb import Bomb
+from src.systems.notification import NotificationManager
 
 
 # main game loop
@@ -37,6 +39,7 @@ def main():
     shots = pygame.sprite.Group()
     explosions = pygame.sprite.Group()
     powerups = pygame.sprite.Group()
+    bombs = pygame.sprite.Group()
 
     Player.containers = (updatable, drawable)  # type: ignore
     Asteroid.containers = (asteroids, updatable, drawable)  # type: ignore
@@ -44,18 +47,20 @@ def main():
     Shot.containers = (shots, updatable, drawable)  # type: ignore
     Explosion.containers = (explosions, updatable, drawable)  # type: ignore
     Powerup.containers = (powerups, updatable, drawable)  # type: ignore
+    Bomb.containers = (bombs, updatable, drawable)  # type: ignore
 
     # Create player at center of screen
     x = SCREEN_WIDTH / 2
     y = SCREEN_HEIGHT / 2
     player = Player(x, y)
 
-    # Create asteroid field and starfield
+    # Create asteroid field, starfield, and notification manager
     asteroid_field = AsteroidField()
     starfield = Starfield()
+    notification_manager = NotificationManager()
 
     def reset_game():
-        nonlocal player, asteroid_field, score, lives, respawn_timer
+        nonlocal player, asteroid_field, score, lives, respawn_timer, notification_manager
         # Clear all sprite groups
         updatable.empty()
         drawable.empty() 
@@ -63,10 +68,12 @@ def main():
         shots.empty()
         explosions.empty()
         powerups.empty()
+        bombs.empty()
         
-        # Recreate player and asteroid field
+        # Recreate player, asteroid field, and notification manager
         player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         asteroid_field = AsteroidField()
+        notification_manager = NotificationManager()
         score = 0
         lives = 3
         respawn_timer = 0
@@ -164,16 +171,22 @@ def main():
         
         if game_state == "playing":
             starfield.update(dt)
+            notification_manager.update(dt)
             for sprite in drawable:
                 sprite.draw(screen)
             updatable.update(dt)
             
-            # Draw score and lives
+            # Draw score, lives, and bomb count
             font = pygame.font.SysFont('courier', 48, bold=True)
             score_text = font.render(f"Score: {score}", True, NEON_CYAN)
             lives_text = font.render(f"Lives: {lives}", True, NEON_PINK)
+            bombs_text = font.render(f"Bombs: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)
             screen.blit(score_text, (20, 20))
             screen.blit(lives_text, (20, 80))
+            screen.blit(bombs_text, (20, 140))
+            
+            # Draw notifications on top
+            notification_manager.draw(screen)
         elif game_state == "game_over":
             # Still draw the game objects but frozen
             for sprite in drawable:
@@ -212,6 +225,7 @@ def main():
             for powerup in powerups:
                 if player.collision(powerup):
                     player.apply_powerup(powerup.powerup_type)
+                    notification_manager.add_powerup_notification(powerup.name, powerup.powerup_type)
                     powerup.kill()
 
         # Check for shot-asteroid collisions
@@ -236,6 +250,24 @@ def main():
                     
                     shot.kill()
                     asteroid.split()
+                    
+        # Check for bomb explosions hitting asteroids
+        for bomb in bombs:
+            if bomb.has_exploded and bomb.explosion_radius > 0:
+                for asteroid in asteroids.copy():  # Use copy to avoid modification during iteration
+                    distance = bomb.position.distance_to(asteroid.position)
+                    if distance <= bomb.explosion_radius:
+                        # Award points based on asteroid size
+                        if asteroid.radius >= ASTEROID_MIN_RADIUS * 2:
+                            score += 20  # Large asteroid
+                        elif asteroid.radius >= ASTEROID_MIN_RADIUS:
+                            score += 50  # Medium asteroid
+                        else:
+                            score += 100  # Small asteroid
+                        
+                        # Create explosion at asteroid position
+                        explosion = Explosion(asteroid.position.x, asteroid.position.y, asteroid.radius)
+                        asteroid.split()
 
 
 

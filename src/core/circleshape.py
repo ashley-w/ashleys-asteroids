@@ -15,9 +15,17 @@ class CircleShape(pygame.sprite.Sprite):
 
 
     def collision(self, other):
-        # Check if the distance between the centers is less than the sum of the radii
-        distance = self.position.distance_to(other.position)
-        return distance < self.radius + other.radius
+        # Special case for Player triangle collision
+        from src.entities.player import Player
+        
+        if isinstance(self, Player):
+            return self._triangle_collision(other)
+        elif isinstance(other, Player):
+            return other._triangle_collision(self)
+        else:
+            # Standard circle-circle collision
+            distance = self.position.distance_to(other.position)
+            return distance < self.radius + other.radius
 
     def draw(self, screen):
         # sub-classes must override
