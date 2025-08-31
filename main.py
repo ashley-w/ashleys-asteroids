@@ -1,5 +1,6 @@
 import pygame
 from constants import *
+from player import Player
 
 
 # main game loop
@@ -18,6 +19,11 @@ def main():
     clock = pygame.time.Clock()
     dt = 0
 
+    # Create player at center of screen
+    x = SCREEN_WIDTH / 2
+    y = SCREEN_HEIGHT / 2
+    player = Player(x, y)
+
     # game loop
     while True:
         # handle events
@@ -26,6 +32,7 @@ def main():
                 return
         # drawing
         screen.fill((0, 0, 0))
+        player.draw(screen)
         pygame.display.flip()
 
         # update game state
