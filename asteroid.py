@@ -33,8 +33,12 @@ class Asteroid(CircleShape):
         glow_color = (*color, 60)
         pygame.draw.circle(screen, glow_color, self.position, self.radius + 3, 0)
         
-        # Draw crisp outer edge
-        pygame.draw.circle(screen, color, self.position, self.radius, 2)
+        # Draw crisp outer edge with thicker border for definition
+        pygame.draw.circle(screen, color, self.position, self.radius, 3)
+        
+        # Add inner highlight ring for more definition
+        highlight_color = (min(255, color[0] + 50), min(255, color[1] + 50), min(255, color[2] + 50))
+        pygame.draw.circle(screen, highlight_color, self.position, self.radius - 3, 1)
 
     def update(self, dt):
         self.position += (self.velocity * dt)  # type: ignore

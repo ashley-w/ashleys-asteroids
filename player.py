@@ -25,42 +25,16 @@ class Player(CircleShape):
         self.rotation += (PLAYER_TURN_SPEED * dt)
 
     def draw(self, screen):
-        # Draw the player as a 3D neon cyan triangle
+        # Draw the player as a clean neon cyan triangle
         points = self.triangle()
         
-        # Create shadow/depth offset points
-        shadow_points = [(p.x + 3, p.y + 3) for p in points]
-        shadow_color = (NEON_CYAN[0]//4, NEON_CYAN[1]//4, NEON_CYAN[2]//4)
-        pygame.draw.polygon(screen, shadow_color, shadow_points, 0)
-        
-        # Draw beveled edge effect with gradient layers
-        # Create slightly smaller triangles with increasing brightness
-        for i in range(3):
-            offset = i * 0.5  # Shrink each layer slightly
-            bevel_points = []
-            center = pygame.Vector2(sum(p.x for p in points)/3, sum(p.y for p in points)/3)
-            
-            for point in points:
-                # Move point slightly toward center for bevel effect
-                direction = center - point
-                new_point = point + direction * (offset / self.radius)
-                bevel_points.append(new_point)
-            
-            intensity = 0.4 + i * 0.2  # Increasing brightness toward center
-            bevel_color = (int(NEON_CYAN[0] * intensity), int(NEON_CYAN[1] * intensity), int(NEON_CYAN[2] * intensity))
-            pygame.draw.polygon(screen, bevel_color, bevel_points, 0)
-        
-        # Draw bright outer glow
-        for i in range(3):
-            glow_color = (*NEON_CYAN, 60 - i * 20)
-            pygame.draw.polygon(screen, glow_color, points, 4 + i)
-            
-        # Draw crisp outer edge
-        pygame.draw.polygon(screen, NEON_CYAN, points, 2)
+        # Draw main triangle with thin outline only
+        pygame.draw.polygon(screen, NEON_CYAN, points, 1)
 
-    def move(self, dt):
+    def thrust(self, dt):
+        # Add acceleration in forward direction
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
-        self.position += forward * PLAYER_SPEED * dt
+        self.velocity += forward * PLAYER_SPEED * dt
 
     def shoot(self):
         if self.shoot_timer > 0:
@@ -85,8 +59,14 @@ class Player(CircleShape):
         if keys[pygame.K_d]:
             self.rotate(dt)
         if keys[pygame.K_w]:
-            self.move(dt)
+            self.thrust(dt)
         if keys[pygame.K_s]:
-            self.move(-dt)
+            self.thrust(-dt)  # Reverse thrust
         if keys[pygame.K_SPACE]:
             self.shoot()
+            
+        # Apply velocity to position
+        self.position += self.velocity * dt
+        
+        # Apply drag/friction to slow down over time
+        self.velocity *= 0.99
