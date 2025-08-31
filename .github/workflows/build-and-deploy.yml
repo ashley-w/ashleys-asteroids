@@ -24,13 +24,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install pygame-ce pygbag
         
-    - name: Check pygbag help
-      run: |
-        python -m pygbag --help
-        
     - name: Build game for web
       run: |
-        python -m pygbag main.py
+        python -m pygbag .
         
     - name: List build output
       run: |
