@@ -46,18 +46,36 @@ class Player(CircleShape):
 
         # Draw shield if active
         if self.has_shield:
-            from src.core.constants import ELECTRIC_BLUE
             import math
             # Pulsing shield effect
             pulse = 1 + 0.2 * math.sin(pygame.time.get_ticks() * 0.01)
             shield_radius = self.radius * 1.5 * pulse
-
-            # Draw shield as a glowing circle
-            for i in range(3):
-                alpha = 60 - i * 15
-                color = (*ELECTRIC_BLUE, alpha)
-                pygame.draw.circle(screen, color, (int(self.position.x), int(self.position.y)),
-                                 int(shield_radius + i * 2), 2)
+            
+            # Rainbow shield with multiple rings
+            current_time = pygame.time.get_ticks() / 1000.0
+            for ring in range(5):
+                # Create rainbow colors that cycle over time
+                hue = (current_time * 2 + ring * 0.5) % (2 * math.pi)
+                r = (math.sin(hue) + 1) * 127.5
+                g = (math.sin(hue + 2.094) + 1) * 127.5  # 2π/3 offset
+                b = (math.sin(hue + 4.188) + 1) * 127.5  # 4π/3 offset
+                
+                rainbow_color = (int(r), int(g), int(b))
+                
+                # Draw gradient rings - outer rings are more transparent
+                alpha = 80 - ring * 12
+                ring_radius = shield_radius + ring * 3
+                
+                # Draw multiple thin circles for gradient effect
+                for thickness in range(3):
+                    fade_alpha = alpha - thickness * 15
+                    if fade_alpha > 0:
+                        fade_color = (rainbow_color[0] * fade_alpha // 100, 
+                                    rainbow_color[1] * fade_alpha // 100, 
+                                    rainbow_color[2] * fade_alpha // 100)
+                        pygame.draw.circle(screen, fade_color, 
+                                         (int(self.position.x), int(self.position.y)),
+                                         int(ring_radius + thickness), 1)
 
         # Draw speed boost effects
         if self.speed_boost:
@@ -116,7 +134,7 @@ class Player(CircleShape):
 
         if self.weapon_type == "rapid_fire":
             cooldown = PLAYER_SHOOT_COOLDOWN * 0.3  # Much faster
-            shot = Shot(tip_position.x, tip_position.y)
+            shot = Shot(tip_position.x, tip_position.y, bullet_type="rapid_fire")
             shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED  # type: ignore
 
         elif self.weapon_type == "spread_shot":
@@ -215,9 +233,15 @@ class Player(CircleShape):
         self.wrap_screen()
 
     def _triangle_collision(self, other):
-        # If shield is active or invulnerable, player is invincible
-        if self.has_shield or self.invulnerable:
-            return False
+        # Check if this is a powerup - shields don't block powerup collection
+        from src.entities.powerup import Powerup
+        if isinstance(other, Powerup):
+            # Always allow powerup collection regardless of shield/invulnerability
+            pass
+        else:
+            # If shield is active or invulnerable, player is invincible to damage
+            if self.has_shield or self.invulnerable:
+                return False
 
         # Triangle-to-circle collision detection
         triangle_points = self.triangle()

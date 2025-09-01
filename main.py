@@ -11,6 +11,7 @@ from src.systems.starfield import Starfield
 from src.entities.powerup import Powerup
 from src.entities.bomb import Bomb
 from src.systems.notification import NotificationManager
+from src.systems.level_system import LevelSystem
 
 
 # main game loop
@@ -28,10 +29,13 @@ async def main():
 
     clock = pygame.time.Clock()
     dt = 0
-    game_state = "start"  # "start", "playing", "paused", or "game_over"
+    game_state = "start"  # "start", "playing", "paused", "game_over", or "level_transition"
     score = 0
     lives = 3
     respawn_timer = 0
+    level_system = LevelSystem()
+    level_transition_timer = 0
+    level_transition_duration = 3.0  # 3 seconds to show level message
 
     # groups
     updatable = pygame.sprite.Group()
@@ -60,8 +64,15 @@ async def main():
     starfield = Starfield()
     notification_manager = NotificationManager()
 
+    def get_retro_font(size, bold=False):
+        """Get consistent retro font that works across platforms"""
+        try:
+            return pygame.font.SysFont('consolas,courier new,monospace', size, bold=bold)
+        except:
+            return pygame.font.Font(None, size)
+    
     def reset_game():
-        nonlocal player, asteroid_field, score, lives, respawn_timer, notification_manager
+        nonlocal player, asteroid_field, score, lives, respawn_timer, notification_manager, level_system
         # Clear all sprite groups
         updatable.empty()
         drawable.empty() 
@@ -75,6 +86,7 @@ async def main():
         player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         asteroid_field = AsteroidField()
         notification_manager = NotificationManager()
+        level_system = LevelSystem()
         score = 0
         lives = 3
         respawn_timer = 0
@@ -105,11 +117,10 @@ async def main():
         overlay.fill((0, 0, 0))
         screen.blit(overlay, (0, 0))
         
-        # Draw game over text
-        # Use built-in font for consistent rendering
-        font_large = pygame.font.Font(None, 74)
-        font_medium = pygame.font.Font(None, 48) 
-        font_small = pygame.font.Font(None, 36)
+        # Draw game over text using consistent retro fonts
+        font_large = get_retro_font(74, bold=True)
+        font_medium = get_retro_font(48, bold=True) 
+        font_small = get_retro_font(36, bold=True)
         
         game_over_text = font_large.render("GAME OVER", True, NEON_PINK)
         
@@ -122,8 +133,10 @@ async def main():
         restart_text = font_medium.render("Press R to Restart", True, NEON_CYAN)
         quit_text = font_medium.render("Press Q to Quit", True, NEON_CYAN)
         
-        # Center the text
-        screen.blit(game_over_text, (SCREEN_WIDTH//2 - game_over_text.get_width()//2, SCREEN_HEIGHT//2 - 120))
+        # Center the text more precisely
+        game_over_x = (SCREEN_WIDTH - game_over_text.get_width()) // 2
+        game_over_y = (SCREEN_HEIGHT - game_over_text.get_height()) // 2 - 120
+        screen.blit(game_over_text, (game_over_x, game_over_y))
         
         # Draw subtitle with stars around "dead"
         subtitle_y = SCREEN_HEIGHT//2 - 70
@@ -149,9 +162,14 @@ async def main():
         # Draw ", babes."
         screen.blit(subtitle_part2, (current_x, subtitle_y))
         
-        screen.blit(final_score_text, (SCREEN_WIDTH//2 - final_score_text.get_width()//2, SCREEN_HEIGHT//2 - 30))
-        screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 10))
-        screen.blit(quit_text, (SCREEN_WIDTH//2 - quit_text.get_width()//2, SCREEN_HEIGHT//2 + 70))
+        # Center remaining text elements precisely
+        final_score_x = (SCREEN_WIDTH - final_score_text.get_width()) // 2
+        restart_x = (SCREEN_WIDTH - restart_text.get_width()) // 2
+        quit_x = (SCREEN_WIDTH - quit_text.get_width()) // 2
+        
+        screen.blit(final_score_text, (final_score_x, SCREEN_HEIGHT//2 - 30))
+        screen.blit(restart_text, (restart_x, SCREEN_HEIGHT//2 + 10))
+        screen.blit(quit_text, (quit_x, SCREEN_HEIGHT//2 + 70))
 
     def draw_pause_menu(screen):
         # Draw semi-transparent overlay
@@ -161,8 +179,8 @@ async def main():
         screen.blit(overlay, (0, 0))
         
         # Draw pause menu
-        font_large = pygame.font.SysFont('monospace', 64, bold=True)
-        font_medium = pygame.font.SysFont('monospace', 48, bold=True)
+        font_large = get_retro_font(64, bold=True)
+        font_medium = get_retro_font(48, bold=True)
         
         pause_text = font_large.render("PAUSED", True, NEON_CYAN)
         resume_text = font_medium.render("Press ESC to Resume", True, NEON_GREEN)
@@ -177,10 +195,10 @@ async def main():
 
     def draw_start_screen(screen):
         # Draw title
-        font_title = pygame.font.SysFont('monospace', 72, bold=True)
-        font_subtitle = pygame.font.SysFont('monospace', 32, bold=True)
-        font_controls = pygame.font.SysFont('monospace', 24, bold=True)
-        font_start = pygame.font.SysFont('monospace', 48, bold=True)
+        font_title = get_retro_font(72, bold=True)
+        font_subtitle = get_retro_font(32, bold=True)
+        font_controls = get_retro_font(24, bold=True)
+        font_start = get_retro_font(48, bold=True)
         
         title_text = font_title.render("ASHLEY'S ASTEROIDS", True, NEON_CYAN)
         subtitle_text = font_subtitle.render("A Triangle Simulator", True, NEON_PURPLE)
@@ -220,6 +238,43 @@ async def main():
         start_surface.blit(start_text, (0, 0))
         screen.blit(start_surface, (SCREEN_WIDTH//2 - start_text.get_width()//2, y_pos + 40))
 
+    def draw_level_transition(screen, level, message):
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        
+        # Rainbow effect for level text
+        import math
+        current_time = pygame.time.get_ticks() / 1000.0
+        hue = current_time * 3  # Faster rainbow cycling
+        r = (math.sin(hue) + 1) * 127.5
+        g = (math.sin(hue + 2.094) + 1) * 127.5
+        b = (math.sin(hue + 4.188) + 1) * 127.5
+        rainbow_color = (int(r), int(g), int(b))
+        
+        font_huge = get_retro_font(120, bold=True)
+        font_medium = get_retro_font(48, bold=True)
+        
+        level_text = font_huge.render(f"LEVEL {level}", True, rainbow_color)
+        message_text = font_medium.render(message, True, NEON_PURPLE)
+        
+        # Center the text with some animation
+        pulse = 1 + 0.1 * math.sin(pygame.time.get_ticks() * 0.005)
+        level_y = SCREEN_HEIGHT//2 - 100
+        message_y = SCREEN_HEIGHT//2 + 20
+        
+        # Pulsing effect for level text
+        level_width = level_text.get_width() * pulse
+        level_height = level_text.get_height() * pulse
+        scaled_level = pygame.transform.scale(level_text, (int(level_width), int(level_height)))
+        
+        screen.blit(scaled_level, 
+                   (SCREEN_WIDTH//2 - scaled_level.get_width()//2, level_y))
+        screen.blit(message_text, 
+                   (SCREEN_WIDTH//2 - message_text.get_width()//2, message_y))
+
     # game loop
     while True:
         # handle events
@@ -248,6 +303,11 @@ async def main():
                         reset_game()
                     elif event.key == pygame.K_q:
                         return
+                elif game_state == "level_transition":
+                    # Skip level transition with any key
+                    if event.key in [pygame.K_SPACE, pygame.K_RETURN]:
+                        game_state = "playing"
+                        level_transition_timer = 0
         # drawing - dark space background with starfield
         screen.fill(DARK_SPACE)
         starfield.draw(screen)
@@ -261,35 +321,53 @@ async def main():
                 sprite.draw(screen)
             updatable.update(dt)
             
-            # Draw score, lives, and bomb count with backgrounds for readability
-            font = pygame.font.SysFont('monospace', 48, bold=True)
+            # Draw arcade-style HUD across the top
+            hud_font = get_retro_font(36)
+            hud_y = 15
             
-            # Helper function to draw text with background
-            def draw_text_with_bg(text, color, x, y):
-                rendered_text = font.render(text, True, color)
-                text_rect = rendered_text.get_rect()
-                text_rect.x = x
-                text_rect.y = y
-                
-                # Create background rectangle with padding
-                bg_rect = pygame.Rect(text_rect.x - 10, text_rect.y - 5, 
-                                    text_rect.width + 20, text_rect.height + 10)
-                
-                # Semi-transparent dark background
-                bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
-                bg_surface.set_alpha(180)
-                bg_surface.fill((0, 0, 0))
-                screen.blit(bg_surface, bg_rect.topleft)
-                
-                # Colored border
-                pygame.draw.rect(screen, color, bg_rect, 2)
-                
-                # Text on top
-                screen.blit(rendered_text, text_rect)
+            # Create semi-transparent background strip for entire HUD
+            hud_bg = pygame.Surface((SCREEN_WIDTH, 50))
+            hud_bg.set_alpha(120)
+            hud_bg.fill((0, 0, 0))
+            screen.blit(hud_bg, (0, 0))
             
-            draw_text_with_bg(f"Score: {score}", NEON_CYAN, 20, 20)
-            draw_text_with_bg(f"Lives: {lives}", NEON_PINK, 20, 80)
-            draw_text_with_bg(f"Bombs: {player.bomb_count if respawn_timer <= 0 else 0}", NEON_PURPLE, 20, 140)
+            # Draw top border line
+            pygame.draw.line(screen, NEON_CYAN, (0, 50), (SCREEN_WIDTH, 50), 2)
+            
+            # Left side: Score
+            score_text = hud_font.render(f"SCORE: {score:08d}", True, NEON_CYAN)
+            screen.blit(score_text, (20, hud_y))
+            
+            # Center-left: Level (positioned after score with proper spacing)
+            level_text = hud_font.render(f"LEVEL: {level_system.current_level:02d}", True, NEON_GREEN)
+            level_x = 20 + score_text.get_width() + 40  # Score + 40px gap
+            screen.blit(level_text, (level_x, hud_y))
+            
+            # Center-right: Lives (positioned dynamically)
+            lives_text = hud_font.render("LIVES:", True, NEON_PINK)
+            lives_x = level_x + level_text.get_width() + 40  # Level + 40px gap
+            screen.blit(lives_text, (lives_x, hud_y))
+            
+            # Draw life triangles
+            life_start_x = lives_x + lives_text.get_width() + 10
+            for i in range(lives):
+                # Small triangle for each life
+                triangle_size = 8
+                triangle_x = life_start_x + i * 25
+                # Align triangle with the vertical center of the text
+                triangle_y = hud_y + (lives_text.get_height() // 2)
+                
+                points = [
+                    (triangle_x, triangle_y - triangle_size),
+                    (triangle_x - triangle_size, triangle_y + triangle_size), 
+                    (triangle_x + triangle_size, triangle_y + triangle_size)
+                ]
+                pygame.draw.polygon(screen, NEON_PINK, points)
+            
+            # Right side: Bombs
+            bombs_text = hud_font.render(f"BOMBS: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)
+            bombs_x = SCREEN_WIDTH - bombs_text.get_width() - 20
+            screen.blit(bombs_text, (bombs_x, hud_y))
             
             # Draw notifications on top
             notification_manager.draw(screen)
@@ -298,35 +376,53 @@ async def main():
             for sprite in drawable:
                 sprite.draw(screen)
             
-            # Draw UI
-            font = pygame.font.SysFont('monospace', 48, bold=True)
+            # Draw same arcade-style HUD as playing state
+            hud_font = get_retro_font(36)
+            hud_y = 15
             
-            # Helper function to draw text with background
-            def draw_text_with_bg(text, color, x, y):
-                rendered_text = font.render(text, True, color)
-                text_rect = rendered_text.get_rect()
-                text_rect.x = x
-                text_rect.y = y
-                
-                # Create background rectangle with padding
-                bg_rect = pygame.Rect(text_rect.x - 10, text_rect.y - 5, 
-                                    text_rect.width + 20, text_rect.height + 10)
-                
-                # Semi-transparent dark background
-                bg_surface = pygame.Surface((bg_rect.width, bg_rect.height))
-                bg_surface.set_alpha(180)
-                bg_surface.fill((0, 0, 0))
-                screen.blit(bg_surface, bg_rect.topleft)
-                
-                # Colored border
-                pygame.draw.rect(screen, color, bg_rect, 2)
-                
-                # Text on top
-                screen.blit(rendered_text, text_rect)
+            # Create semi-transparent background strip for entire HUD
+            hud_bg = pygame.Surface((SCREEN_WIDTH, 50))
+            hud_bg.set_alpha(120)
+            hud_bg.fill((0, 0, 0))
+            screen.blit(hud_bg, (0, 0))
             
-            draw_text_with_bg(f"Score: {score}", NEON_CYAN, 20, 20)
-            draw_text_with_bg(f"Lives: {lives}", NEON_PINK, 20, 80)
-            draw_text_with_bg(f"Bombs: {player.bomb_count if respawn_timer <= 0 else 0}", NEON_PURPLE, 20, 140)
+            # Draw top border line
+            pygame.draw.line(screen, NEON_CYAN, (0, 50), (SCREEN_WIDTH, 50), 2)
+            
+            # Left side: Score
+            score_text = hud_font.render(f"SCORE: {score:08d}", True, NEON_CYAN)
+            screen.blit(score_text, (20, hud_y))
+            
+            # Center-left: Level (positioned after score with proper spacing) 
+            level_text = hud_font.render(f"LEVEL: {level_system.current_level:02d}", True, NEON_GREEN)
+            level_x = 20 + score_text.get_width() + 40  # Score + 40px gap
+            screen.blit(level_text, (level_x, hud_y))
+            
+            # Center-right: Lives (positioned dynamically)
+            lives_text = hud_font.render("LIVES:", True, NEON_PINK)
+            lives_x = level_x + level_text.get_width() + 40  # Level + 40px gap
+            screen.blit(lives_text, (lives_x, hud_y))
+            
+            # Draw life triangles
+            life_start_x = lives_x + lives_text.get_width() + 10
+            for i in range(lives):
+                # Small triangle for each life
+                triangle_size = 8
+                triangle_x = life_start_x + i * 25
+                # Align triangle with the vertical center of the text
+                triangle_y = hud_y + (lives_text.get_height() // 2)
+                
+                points = [
+                    (triangle_x, triangle_y - triangle_size),
+                    (triangle_x - triangle_size, triangle_y + triangle_size), 
+                    (triangle_x + triangle_size, triangle_y + triangle_size)
+                ]
+                pygame.draw.polygon(screen, NEON_PINK, points)
+            
+            # Right side: Bombs
+            bombs_text = hud_font.render(f"BOMBS: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)
+            bombs_x = SCREEN_WIDTH - bombs_text.get_width() - 20
+            screen.blit(bombs_text, (bombs_x, hud_y))
             
             # Draw pause menu
             draw_pause_menu(screen)
@@ -335,6 +431,12 @@ async def main():
             for sprite in drawable:
                 sprite.draw(screen)
             draw_game_over(screen)
+        elif game_state == "level_transition":
+            # Draw frozen game state in background
+            for sprite in drawable:
+                sprite.draw(screen)
+            # Draw level transition screen
+            draw_level_transition(screen, level_system.current_level, level_system.get_level_message())
         
         pygame.display.flip()
 
@@ -342,7 +444,22 @@ async def main():
         dt = clock.tick(60) / 1000
         await asyncio.sleep(0)
 
-        if game_state == "playing":
+        if game_state == "level_transition":
+            # Handle level transition timer
+            level_transition_timer += dt
+            if level_transition_timer >= level_transition_duration:
+                game_state = "playing"
+                level_transition_timer = 0
+
+        elif game_state == "playing":
+            # Check for level up
+            if level_system.check_level_up(score):
+                game_state = "level_transition"
+                level_transition_timer = 0
+                # Apply new difficulty to asteroid field
+                asteroid_field.spawn_rate = level_system.get_asteroid_spawn_rate()
+                asteroid_field.speed_multiplier = level_system.get_asteroid_speed_multiplier()
+            
             # Handle respawn timer
             if respawn_timer > 0:
                 respawn_timer -= dt
@@ -376,13 +493,20 @@ async def main():
         for asteroid in asteroids:
             for shot in shots:
                 if shot.collision(asteroid):
-                    # Award points based on asteroid size
+                    # Award points based on asteroid size and type
+                    base_points = 0
                     if asteroid.radius >= ASTEROID_MIN_RADIUS * 2:
-                        score += 20  # Large asteroid
+                        base_points = 20  # Large asteroid
                     elif asteroid.radius >= ASTEROID_MIN_RADIUS:
-                        score += 50  # Medium asteroid
+                        base_points = 50  # Medium asteroid
                     else:
-                        score += 100  # Small asteroid
+                        base_points = 100  # Small asteroid
+                    
+                    # Word asteroids give bonus points!
+                    if hasattr(asteroid, 'is_word_asteroid') and asteroid.is_word_asteroid:
+                        score += base_points * 3  # 3x points for defeating existential dread
+                    else:
+                        score += base_points
                     
                     # Create explosion at asteroid position
                     explosion = Explosion(asteroid.position.x, asteroid.position.y, asteroid.radius)
@@ -401,13 +525,20 @@ async def main():
                 for asteroid in asteroids.copy():  # Use copy to avoid modification during iteration
                     distance = bomb.position.distance_to(asteroid.position)
                     if distance <= bomb.explosion_radius:
-                        # Award points based on asteroid size
+                        # Award points based on asteroid size and type
+                        base_points = 0
                         if asteroid.radius >= ASTEROID_MIN_RADIUS * 2:
-                            score += 20  # Large asteroid
+                            base_points = 20  # Large asteroid
                         elif asteroid.radius >= ASTEROID_MIN_RADIUS:
-                            score += 50  # Medium asteroid
+                            base_points = 50  # Medium asteroid
                         else:
-                            score += 100  # Small asteroid
+                            base_points = 100  # Small asteroid
+                        
+                        # Word asteroids give bonus points!
+                        if hasattr(asteroid, 'is_word_asteroid') and asteroid.is_word_asteroid:
+                            score += base_points * 3  # 3x points for defeating existential dread
+                        else:
+                            score += base_points
                         
                         # Create explosion at asteroid position
                         explosion = Explosion(asteroid.position.x, asteroid.position.y, asteroid.radius)

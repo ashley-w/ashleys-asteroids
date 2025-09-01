@@ -2,7 +2,7 @@ import pygame
 import random
 import math
 from src.core.circleshape import CircleShape
-from src.core.constants import ASTEROID_MIN_RADIUS, NEON_PURPLE, NEON_PINK
+from src.core.constants import ASTEROID_MIN_RADIUS, NEON_PURPLE, NEON_PINK, NEON_CYAN
 
 class Asteroid(CircleShape):
     def __init__(self, x, y, radius):
@@ -89,6 +89,79 @@ class Asteroid(CircleShape):
         new_radius = self.radius - ASTEROID_MIN_RADIUS
         
         # Create two new asteroids at current position
+        asteroid1 = Asteroid(self.position.x, self.position.y, new_radius)
+        asteroid2 = Asteroid(self.position.x, self.position.y, new_radius)
+        
+        # Set velocities with 1.2 speed multiplier
+        asteroid1.velocity = velocity1 * 1.2  # type: ignore
+        asteroid2.velocity = velocity2 * 1.2  # type: ignore
+
+
+class WordAsteroid(Asteroid):
+    """Special asteroid that displays existential words instead of shapes"""
+    
+    WORD_LIST = ["WORK", "TAXES", "ANXIETY", "DEBT", "BILLS", "STRESS"]
+    
+    def __init__(self, x, y, radius):
+        super().__init__(x, y, radius)
+        self.word = random.choice(self.WORD_LIST)
+        # Make word asteroids slightly more valuable
+        self.is_word_asteroid = True
+    
+    def draw(self, screen):
+        # Draw a subtle background glow
+        glow_radius = self.radius * 1.3
+        for i in range(3):
+            alpha = 30 - i * 8
+            glow_color = (*NEON_CYAN, alpha)
+            pygame.draw.circle(screen, glow_color, self.position, int(glow_radius - i * 3), 0)
+        
+        # Choose font size based on asteroid size
+        if self.radius >= ASTEROID_MIN_RADIUS * 2:
+            font_size = 48
+        elif self.radius >= ASTEROID_MIN_RADIUS:
+            font_size = 36
+        else:
+            font_size = 24
+            
+        font = pygame.font.Font(None, font_size)
+        
+        # Create text with shadow effect
+        shadow_text = font.render(self.word, True, (20, 20, 20))
+        main_text = font.render(self.word, True, NEON_CYAN)
+        
+        # Center the text on the asteroid position
+        shadow_rect = shadow_text.get_rect(center=(self.position.x + 2, self.position.y + 2))
+        main_rect = main_text.get_rect(center=self.position)
+        
+        # Draw shadow then main text
+        screen.blit(shadow_text, shadow_rect)
+        screen.blit(main_text, main_rect)
+        
+        # Draw subtle border around text area
+        border_rect = main_rect.inflate(10, 10)
+        pygame.draw.rect(screen, NEON_CYAN, border_rect, 2)
+    
+    def split(self):
+        # Word asteroids split into regular asteroids
+        # Kill this asteroid
+        self.kill()
+        
+        # If this is a small asteroid, just disappear
+        if self.radius <= ASTEROID_MIN_RADIUS:
+            return
+        
+        # Generate random angle between 20-50 degrees
+        random_angle = random.uniform(20, 50)
+        
+        # Create two new velocity vectors by rotating current velocity
+        velocity1 = self.velocity.rotate(random_angle)
+        velocity2 = self.velocity.rotate(-random_angle)
+        
+        # Calculate new radius for smaller asteroids
+        new_radius = self.radius - ASTEROID_MIN_RADIUS
+        
+        # Create two new REGULAR asteroids at current position
         asteroid1 = Asteroid(self.position.x, self.position.y, new_radius)
         asteroid2 = Asteroid(self.position.x, self.position.y, new_radius)
         
