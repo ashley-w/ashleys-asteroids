@@ -354,8 +354,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                # Align triangle with the vertical center of the text
-                triangle_y = hud_y + (lives_text.get_height() // 2)
+                triangle_y = hud_y + 10
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
@@ -409,8 +408,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                # Align triangle with the vertical center of the text
-                triangle_y = hud_y + (lives_text.get_height() // 2)
+                triangle_y = hud_y + 10
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
