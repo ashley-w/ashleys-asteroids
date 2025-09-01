@@ -39,7 +39,7 @@ class Shot(CircleShape):
 
         # Heart made from circles and triangle
         # Two circles for the top lobes
-        circle_radius = int(size * 0.5)
+        circle_radius = max(1, int(size * 0.5))
         left_circle = (x - int(size * 0.3), y - int(size * 0.2))
         right_circle = (x + int(size * 0.3), y - int(size * 0.2))
 
