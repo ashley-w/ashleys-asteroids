@@ -350,7 +350,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + lives_text.get_height() - triangle_size
+                triangle_y = hud_y + lives_text.get_height() - 2
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
@@ -404,7 +404,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + lives_text.get_height() - triangle_size
+                triangle_y = hud_y + lives_text.get_height() - 2
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
