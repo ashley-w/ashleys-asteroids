@@ -34,39 +34,42 @@ class Shot(CircleShape):
         pygame.draw.polygon(screen, color, points)
 
     def draw_heart(self, screen, center, size, color):
-        """Draw a heart shape using a single polygon"""
+        """Draw a clear, visible heart shape using circles and triangle"""
         if size <= 0:
             return
         x, y = int(center[0]), int(center[1])
-        s = size * 0.8  # Scale factor for the heart shape
         
         # Ensure color values are valid integers
         safe_color = (max(0, min(255, int(color[0]))), 
                      max(0, min(255, int(color[1]))), 
                      max(0, min(255, int(color[2]))))
 
-        # Pre-calculated points for a heart polygon, scaled and centered
-        points = [
-            (int(x), int(y + s * 0.5)),
-            (int(x - s * 0.5), int(y - s * 0.1)),
-            (int(x - s * 0.5), int(y - s * 0.5)),
-            (int(x - s * 0.25), int(y - s * 0.8)),
-            (int(x), int(y - s * 0.6)),
-            (int(x + s * 0.25), int(y - s * 0.8)),
-            (int(x + s * 0.5), int(y - s * 0.5)),
-            (int(x + s * 0.5), int(y - s * 0.1)),
+        # Draw heart using two circles for the top lobes and a triangle for bottom
+        circle_radius = int(size * 0.4)
+        left_circle = (int(x - size * 0.3), int(y - size * 0.2))
+        right_circle = (int(x + size * 0.3), int(y - size * 0.2))
+        
+        # Draw filled circles for top lobes
+        pygame.draw.circle(screen, safe_color, left_circle, circle_radius)
+        pygame.draw.circle(screen, safe_color, right_circle, circle_radius)
+        
+        # Draw triangle for bottom point
+        triangle_points = [
+            (int(x - size * 0.6), int(y)),
+            (int(x + size * 0.6), int(y)),
+            (int(x), int(y + size * 0.7))
         ]
-        pygame.draw.polygon(screen, safe_color, points)
+        pygame.draw.polygon(screen, safe_color, triangle_points)
 
     def get_pink_rainbow_color(self, time_offset=0):
         """Generate pink-tinted rainbow color"""
         current_time = pygame.time.get_ticks() / 1000.0
         hue = (self.creation_time + current_time + time_offset) * 2
 
-        # Pink rainbow - bias toward pink/magenta/red spectrum
-        r = (math.sin(hue) * 0.3 + 0.7) * 255  # Keep red high
-        g = (math.sin(hue + 2.094) * 0.4 + 0.2) * 255  # Moderate green
-        b = (math.sin(hue + 4.188) * 0.5 + 0.5) * 255  # Pink/purple bias
+        # More vibrant pink rainbow with stronger color shifts
+        r = (math.sin(hue) * 0.4 + 0.8) * 255  # Higher red baseline
+        g = (math.sin(hue + 2.094) * 0.6 + 0.3) * 255  # More green variation
+        b = (math.sin(hue + 4.188) * 0.7 + 0.7) * 255  # Strong pink/purple
 
         return (int(r), int(g), int(b))
 

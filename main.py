@@ -339,10 +339,33 @@ async def main():
             level_x = 20 + score_text.get_width() + 40  # Score + 40px gap
             screen.blit(level_text, (level_x, hud_y))
 
-            # Center-right: Lives
-            lives_text = hud_font.render(f"LIVES: {lives}", True, NEON_PINK)
+            # Center-right: Lives with heart symbols
+            lives_label = hud_font.render("LIVES:", True, NEON_PINK)
             lives_x = level_x + level_text.get_width() + 40
-            screen.blit(lives_text, (lives_x, hud_y))
+            screen.blit(lives_label, (lives_x, hud_y))
+            
+            # Draw heart symbols for each life
+            heart_start_x = lives_x + lives_label.get_width() + 10
+            heart_size = 12
+            for i in range(lives):
+                heart_x = heart_start_x + i * (heart_size * 2 + 5)
+                heart_y = hud_y + lives_label.get_height() // 2
+                
+                # Draw heart using circles and triangle
+                # Two circles for top lobes
+                circle_radius = heart_size // 3
+                left_circle = (heart_x - heart_size//3, heart_y - heart_size//4)
+                right_circle = (heart_x + heart_size//3, heart_y - heart_size//4)
+                pygame.draw.circle(screen, NEON_PINK, left_circle, circle_radius)
+                pygame.draw.circle(screen, NEON_PINK, right_circle, circle_radius)
+                
+                # Triangle for bottom point
+                triangle_points = [
+                    (heart_x - heart_size//2, heart_y),
+                    (heart_x + heart_size//2, heart_y),
+                    (heart_x, heart_y + heart_size//2)
+                ]
+                pygame.draw.polygon(screen, NEON_PINK, triangle_points)
 
             # Right side: Bombs
             bombs_text = hud_font.render(f"BOMBS: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)
@@ -378,10 +401,33 @@ async def main():
             level_x = 20 + score_text.get_width() + 40  # Score + 40px gap
             screen.blit(level_text, (level_x, hud_y))
 
-            # Center-right: Lives
-            lives_text = hud_font.render(f"LIVES: {lives}", True, NEON_PINK)
+            # Center-right: Lives with heart symbols
+            lives_label = hud_font.render("LIVES:", True, NEON_PINK)
             lives_x = level_x + level_text.get_width() + 40
-            screen.blit(lives_text, (lives_x, hud_y))
+            screen.blit(lives_label, (lives_x, hud_y))
+            
+            # Draw heart symbols for each life
+            heart_start_x = lives_x + lives_label.get_width() + 10
+            heart_size = 12
+            for i in range(lives):
+                heart_x = heart_start_x + i * (heart_size * 2 + 5)
+                heart_y = hud_y + lives_label.get_height() // 2
+                
+                # Draw heart using circles and triangle
+                # Two circles for top lobes
+                circle_radius = heart_size // 3
+                left_circle = (heart_x - heart_size//3, heart_y - heart_size//4)
+                right_circle = (heart_x + heart_size//3, heart_y - heart_size//4)
+                pygame.draw.circle(screen, NEON_PINK, left_circle, circle_radius)
+                pygame.draw.circle(screen, NEON_PINK, right_circle, circle_radius)
+                
+                # Triangle for bottom point
+                triangle_points = [
+                    (heart_x - heart_size//2, heart_y),
+                    (heart_x + heart_size//2, heart_y),
+                    (heart_x, heart_y + heart_size//2)
+                ]
+                pygame.draw.polygon(screen, NEON_PINK, triangle_points)
 
             # Right side: Bombs
             bombs_text = hud_font.render(f"BOMBS: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)

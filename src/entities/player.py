@@ -138,9 +138,9 @@ class Player(CircleShape):
             shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED  # type: ignore
 
         elif self.weapon_type == "spread_shot":
-            # Fire 3 heart shots in a spread
+            # Fire 3 larger heart shots in a spread
             for angle_offset in [-20, 0, 20]:
-                shot = Shot(tip_position.x, tip_position.y, bullet_type="spread_shot")
+                shot = Shot(tip_position.x, tip_position.y, size_multiplier=1.8, bullet_type="spread_shot")
                 shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation + angle_offset) * PLAYER_SHOOT_SPEED  # type: ignore
 
         elif self.weapon_type == "big_shot":
