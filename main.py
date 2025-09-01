@@ -133,9 +133,9 @@ async def main():
         restart_text = font_medium.render("Press R to Restart", True, NEON_CYAN)
         quit_text = font_medium.render("Press Q to Quit", True, NEON_CYAN)
         
-        # Center the text more precisely
-        game_over_x = (SCREEN_WIDTH - game_over_text.get_width()) // 2
-        game_over_y = (SCREEN_HEIGHT - game_over_text.get_height()) // 2 - 120
+        # Center the text properly
+        game_over_x = SCREEN_WIDTH // 2 - game_over_text.get_width() // 2
+        game_over_y = SCREEN_HEIGHT // 2 - 120
         screen.blit(game_over_text, (game_over_x, game_over_y))
         
         # Draw subtitle with stars around "dead"
@@ -162,14 +162,10 @@ async def main():
         # Draw ", babes."
         screen.blit(subtitle_part2, (current_x, subtitle_y))
         
-        # Center remaining text elements precisely
-        final_score_x = (SCREEN_WIDTH - final_score_text.get_width()) // 2
-        restart_x = (SCREEN_WIDTH - restart_text.get_width()) // 2
-        quit_x = (SCREEN_WIDTH - quit_text.get_width()) // 2
-        
-        screen.blit(final_score_text, (final_score_x, SCREEN_HEIGHT//2 - 30))
-        screen.blit(restart_text, (restart_x, SCREEN_HEIGHT//2 + 10))
-        screen.blit(quit_text, (quit_x, SCREEN_HEIGHT//2 + 70))
+        # Center remaining text elements
+        screen.blit(final_score_text, (SCREEN_WIDTH//2 - final_score_text.get_width()//2, SCREEN_HEIGHT//2 - 30))
+        screen.blit(restart_text, (SCREEN_WIDTH//2 - restart_text.get_width()//2, SCREEN_HEIGHT//2 + 10))
+        screen.blit(quit_text, (SCREEN_WIDTH//2 - quit_text.get_width()//2, SCREEN_HEIGHT//2 + 70))
 
     def draw_pause_menu(screen):
         # Draw semi-transparent overlay
@@ -354,7 +350,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + 10
+                triangle_y = hud_y + lives_text.get_height() - 5
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
@@ -408,7 +404,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + 10
+                triangle_y = hud_y + lives_text.get_height() - 5
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
