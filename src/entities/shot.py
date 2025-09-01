@@ -33,6 +33,39 @@ class Shot(CircleShape):
         ]
         pygame.draw.polygon(screen, color, points)
     
+    def draw_heart(self, screen, center, size, color):
+        """Draw a heart shape"""
+        x, y = int(center[0]), int(center[1])
+        
+        # Heart made from circles and triangle
+        # Two circles for the top lobes
+        circle_radius = int(size * 0.5)
+        left_circle = (x - int(size * 0.3), y - int(size * 0.2))
+        right_circle = (x + int(size * 0.3), y - int(size * 0.2))
+        
+        pygame.draw.circle(screen, color, left_circle, circle_radius)
+        pygame.draw.circle(screen, color, right_circle, circle_radius)
+        
+        # Triangle for the bottom point
+        triangle_points = [
+            (x - int(size * 0.7), y),
+            (x + int(size * 0.7), y), 
+            (x, y + int(size * 0.8))
+        ]
+        pygame.draw.polygon(screen, color, triangle_points)
+    
+    def get_pink_rainbow_color(self, time_offset=0):
+        """Generate pink-tinted rainbow color"""
+        current_time = pygame.time.get_ticks() / 1000.0
+        hue = (self.creation_time + current_time + time_offset) * 2
+        
+        # Pink rainbow - bias toward pink/magenta/red spectrum
+        r = (math.sin(hue) * 0.3 + 0.7) * 255  # Keep red high
+        g = (math.sin(hue + 2.094) * 0.4 + 0.2) * 255  # Moderate green
+        b = (math.sin(hue + 4.188) * 0.5 + 0.5) * 255  # Pink/purple bias
+        
+        return (int(r), int(g), int(b))
+    
     def draw(self, screen):
         if self.bullet_type == "rapid_fire":
             # Rainbow rapid fire bullets - diamond shaped
@@ -59,6 +92,32 @@ class Shot(CircleShape):
             
             # Draw bright white center
             self.draw_diamond(screen, self.position, max(1, self.radius // 2), (255, 255, 255))
+        
+        elif self.bullet_type == "spread_shot":
+            # Pink rainbow heart bullets
+            current_color = self.get_pink_rainbow_color()
+            
+            # Draw motion trail with pink rainbow fade
+            if hasattr(self, 'velocity') and self.velocity.length() > 0:
+                for i in range(4):
+                    trail_offset = self.velocity.normalize() * -(i * 3)
+                    trail_pos = (self.position.x + trail_offset.x, self.position.y + trail_offset.y)
+                    trail_color = self.get_pink_rainbow_color(i * 0.2)
+                    trail_color = (trail_color[0]//4, trail_color[1]//4, trail_color[2]//4)
+                    self.draw_heart(screen, trail_pos, self.radius - i, trail_color)
+            
+            # Draw pink rainbow glow layers
+            for i in range(3):
+                glow_size = self.radius + 1 + i * 2
+                glow_color = self.get_pink_rainbow_color(i * 0.3)
+                glow_color = (glow_color[0]//3, glow_color[1]//3, glow_color[2]//3)
+                self.draw_heart(screen, self.position, glow_size, glow_color)
+            
+            # Draw main heart with bright pink rainbow color
+            self.draw_heart(screen, self.position, self.radius, current_color)
+            
+            # Draw bright white center dot
+            pygame.draw.circle(screen, (255, 255, 255), self.position, max(1, self.radius // 3))
         
         else:
             # Normal green circular bullets
