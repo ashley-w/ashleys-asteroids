@@ -106,10 +106,10 @@ async def main():
         screen.blit(overlay, (0, 0))
         
         # Draw game over text
-        # Use retro monospace font
-        font_large = pygame.font.SysFont('courier', 74, bold=True)
-        font_medium = pygame.font.SysFont('courier', 48, bold=True)
-        font_small = pygame.font.SysFont('courier', 36)
+        # Use built-in font for consistent rendering
+        font_large = pygame.font.Font(None, 74)
+        font_medium = pygame.font.Font(None, 48) 
+        font_small = pygame.font.Font(None, 36)
         
         game_over_text = font_large.render("GAME OVER", True, NEON_PINK)
         
@@ -161,8 +161,8 @@ async def main():
         screen.blit(overlay, (0, 0))
         
         # Draw pause menu
-        font_large = pygame.font.SysFont('courier', 64, bold=True)
-        font_medium = pygame.font.SysFont('courier', 48, bold=True)
+        font_large = pygame.font.SysFont('monospace', 64, bold=True)
+        font_medium = pygame.font.SysFont('monospace', 48, bold=True)
         
         pause_text = font_large.render("PAUSED", True, NEON_CYAN)
         resume_text = font_medium.render("Press ESC to Resume", True, NEON_GREEN)
@@ -177,10 +177,10 @@ async def main():
 
     def draw_start_screen(screen):
         # Draw title
-        font_title = pygame.font.SysFont('courier', 72, bold=True)
-        font_subtitle = pygame.font.SysFont('courier', 32, bold=True)
-        font_controls = pygame.font.SysFont('courier', 24, bold=True)
-        font_start = pygame.font.SysFont('courier', 48, bold=True)
+        font_title = pygame.font.SysFont('monospace', 72, bold=True)
+        font_subtitle = pygame.font.SysFont('monospace', 32, bold=True)
+        font_controls = pygame.font.SysFont('monospace', 24, bold=True)
+        font_start = pygame.font.SysFont('monospace', 48, bold=True)
         
         title_text = font_title.render("ASHLEY'S ASTEROIDS", True, NEON_CYAN)
         subtitle_text = font_subtitle.render("A Triangle Simulator", True, NEON_PURPLE)
@@ -262,7 +262,7 @@ async def main():
             updatable.update(dt)
             
             # Draw score, lives, and bomb count with backgrounds for readability
-            font = pygame.font.SysFont('courier', 48, bold=True)
+            font = pygame.font.SysFont('monospace', 48, bold=True)
             
             # Helper function to draw text with background
             def draw_text_with_bg(text, color, x, y):
@@ -299,7 +299,7 @@ async def main():
                 sprite.draw(screen)
             
             # Draw UI
-            font = pygame.font.SysFont('courier', 48, bold=True)
+            font = pygame.font.SysFont('monospace', 48, bold=True)
             
             # Helper function to draw text with background
             def draw_text_with_bg(text, color, x, y):

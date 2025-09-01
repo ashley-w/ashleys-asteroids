@@ -4,7 +4,9 @@
 A synthwave-themed asteroids game built with Python and pygame, featuring triangle-based collision detection, lumpy procedural asteroids, and explosive gameplay.
 
 ## 🎮 Play Online
-[Play the game on Netlify](https://your-netlify-url.netlify.app) *(coming soon)*
+**[🕹️ Play Now on itch.io](https://just-ashley.itch.io/ashleys-asteroids-a-triangle-simulator)**
+
+No downloads needed - runs directly in your browser!
 
 ## 🚀 Features
 - **Triangle collision detection** for precise gameplay
@@ -38,19 +40,15 @@ python main.py
 
 ### Web Build & Deploy
 ```bash
+# Install pygbag for web builds
+pip install pygbag
+
 # Build for web
-python build-local.py
+pygbag main.py
 
-# This creates a 'main' folder with web files
-# Upload the contents of the 'main' folder to Netlify manually
+# Web files are created in build/web/
+# Upload to itch.io or other hosting service
 ```
-
-## 🌐 Manual Deployment to Netlify
-
-1. **Build locally:** Run `python build-local.py`
-2. **Find the output:** Look for a `main` folder with your web files
-3. **Deploy:** Drag & drop the `main` folder contents to Netlify
-4. **Your game goes live!** 🔺
 
 ## 📁 Project Structure
 ```
@@ -59,17 +57,18 @@ ashleys-asteroids/
 │   ├── core/           # Core game systems
 │   ├── entities/       # Game objects (player, asteroids, etc.)
 │   └── systems/        # Game systems (explosions, notifications, etc.)
-├── main.py            # Main game entry point
-├── requirements.txt   # Python dependencies
-├── build-local.py     # Simple build script
-└── README.md         # This file
+├── main.py                    # Main game entry point
+├── requirements.txt           # Python dependencies
+├── pyproject.toml            # Project configuration
+├── build/web/                # Web build output (pygbag)
+└── README.md                 # This file
 ```
 
 ## 🎨 Tech Stack
 - **Python 3.10+**
-- **pygame-ce** for game engine
-- **pygbag** for WebAssembly compilation
-- **Netlify** for web hosting (manual deploy)
+- **pygame 2.6+** for game engine
+- **pygbag** for WebAssembly compilation  
+- **itch.io** for web hosting
 
 ## 🔧 Game Architecture
 - **Entity-Component System** with pygame sprite groups
