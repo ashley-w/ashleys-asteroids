@@ -138,9 +138,9 @@ async def main():
         game_over_y = SCREEN_HEIGHT // 2 - 120
         screen.blit(game_over_text, (game_over_x, game_over_y))
         
-        # Draw subtitle with stars around "dead"
-        subtitle_y = SCREEN_HEIGHT//2 - 70
-        total_width = subtitle_part1.get_width() + dead_text.get_width() + subtitle_part2.get_width() + 60  # +60 for star space
+        # Draw subtitle with stars around "dead" - properly centered
+        subtitle_y = SCREEN_HEIGHT//2 - 50  # Closer to Game Over text
+        total_width = subtitle_part1.get_width() + dead_text.get_width() + subtitle_part2.get_width() + 50  # +50 for star space
         start_x = SCREEN_WIDTH//2 - total_width//2
         
         # Draw "It's giving "
@@ -350,7 +350,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + lives_text.get_height() - 5
+                triangle_y = hud_y + lives_text.get_height() - triangle_size
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
@@ -404,7 +404,7 @@ async def main():
                 # Small triangle for each life
                 triangle_size = 8
                 triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + lives_text.get_height() - 5
+                triangle_y = hud_y + lives_text.get_height() - triangle_size
                 
                 points = [
                     (triangle_x, triangle_y - triangle_size),
