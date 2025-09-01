@@ -339,25 +339,10 @@ async def main():
             level_x = 20 + score_text.get_width() + 40  # Score + 40px gap
             screen.blit(level_text, (level_x, hud_y))
 
-            # Center-right: Lives (positioned dynamically)
-            lives_text = hud_font.render("LIVES:", True, NEON_PINK)
-            lives_x = level_x + level_text.get_width() + 40  # Level + 40px gap
+            # Center-right: Lives
+            lives_text = hud_font.render(f"LIVES: {lives}", True, NEON_PINK)
+            lives_x = level_x + level_text.get_width() + 40
             screen.blit(lives_text, (lives_x, hud_y))
-
-            # Draw life triangles
-            life_start_x = lives_x + lives_text.get_width() + 10
-            for i in range(lives):
-                # Small triangle for each life
-                triangle_size = 8
-                triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + (lives_text.get_height() // 2)
-
-                points = [
-                    (triangle_x, triangle_y - triangle_size),
-                    (triangle_x - triangle_size, triangle_y + triangle_size),
-                    (triangle_x + triangle_size, triangle_y + triangle_size)
-                ]
-                pygame.draw.polygon(screen, NEON_PINK, points)
 
             # Right side: Bombs
             bombs_text = hud_font.render(f"BOMBS: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)
@@ -393,25 +378,10 @@ async def main():
             level_x = 20 + score_text.get_width() + 40  # Score + 40px gap
             screen.blit(level_text, (level_x, hud_y))
 
-            # Center-right: Lives (positioned dynamically)
-            lives_text = hud_font.render("LIVES:", True, NEON_PINK)
-            lives_x = level_x + level_text.get_width() + 40  # Level + 40px gap
+            # Center-right: Lives
+            lives_text = hud_font.render(f"LIVES: {lives}", True, NEON_PINK)
+            lives_x = level_x + level_text.get_width() + 40
             screen.blit(lives_text, (lives_x, hud_y))
-
-            # Draw life triangles
-            life_start_x = lives_x + lives_text.get_width() + 10
-            for i in range(lives):
-                # Small triangle for each life
-                triangle_size = 8
-                triangle_x = life_start_x + i * 25
-                triangle_y = hud_y + (lives_text.get_height() // 2)
-
-                points = [
-                    (triangle_x, triangle_y - triangle_size),
-                    (triangle_x - triangle_size, triangle_y + triangle_size),
-                    (triangle_x + triangle_size, triangle_y + triangle_size)
-                ]
-                pygame.draw.polygon(screen, NEON_PINK, points)
 
             # Right side: Bombs
             bombs_text = hud_font.render(f"BOMBS: {player.bomb_count if respawn_timer <= 0 else 0}", True, NEON_PURPLE)

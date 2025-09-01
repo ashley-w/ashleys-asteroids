@@ -37,21 +37,26 @@ class Shot(CircleShape):
         """Draw a heart shape using a single polygon"""
         if size <= 0:
             return
-        x, y = center
+        x, y = int(center[0]), int(center[1])
         s = size * 0.8  # Scale factor for the heart shape
+        
+        # Ensure color values are valid integers
+        safe_color = (max(0, min(255, int(color[0]))), 
+                     max(0, min(255, int(color[1]))), 
+                     max(0, min(255, int(color[2]))))
 
         # Pre-calculated points for a heart polygon, scaled and centered
         points = [
-            (x, y + s * 0.5),
-            (x - s * 0.5, y - s * 0.1),
-            (x - s * 0.5, y - s * 0.5),
-            (x - s * 0.25, y - s * 0.8),
-            (x, y - s * 0.6),
-            (x + s * 0.25, y - s * 0.8),
-            (x + s * 0.5, y - s * 0.5),
-            (x + s * 0.5, y - s * 0.1),
+            (int(x), int(y + s * 0.5)),
+            (int(x - s * 0.5), int(y - s * 0.1)),
+            (int(x - s * 0.5), int(y - s * 0.5)),
+            (int(x - s * 0.25), int(y - s * 0.8)),
+            (int(x), int(y - s * 0.6)),
+            (int(x + s * 0.25), int(y - s * 0.8)),
+            (int(x + s * 0.5), int(y - s * 0.5)),
+            (int(x + s * 0.5), int(y - s * 0.1)),
         ]
-        pygame.draw.polygon(screen, color, points)
+        pygame.draw.polygon(screen, safe_color, points)
 
     def get_pink_rainbow_color(self, time_offset=0):
         """Generate pink-tinted rainbow color"""
